@@ -85,32 +85,51 @@ the authenticity of the message by checking whether
 
 ## Node Identity
 
-All cryptographic operations are based on the secp256k1 elliptic curve. Each node is
-expected to maintain a static secp256k1 private key which is saved and restored between
-sessions. It is recommended that the private key can only be reset manually, for example,
-by deleting a file or database entry.
+* cryptographic operations
+  * 👀are -- based on the -- `secp256k1` elliptic curve👀
+
+* EACH node
+  * 💡should maintain a static `secp256k1` private key💡 /
+    * saved
+    * 👀restored BETWEEN sessions👀
+    * recommendation
+      * only reset MANUALLY
+        * _Example:_ | delete a file or database entry
 
 ## Initial Handshake
 
-An RLPx connection is established by creating a TCP connection and agreeing on ephemeral
-key material for further encrypted and authenticated communication. The process of
-creating those session keys is the 'handshake' and is carried out between the 'initiator'
-(the node which opened the TCP connection) and the 'recipient' (the node which accepted it).
+* RLPx connection
+  * established -- by creating a -- TCP connection
+  * agreeing | ephemeral key material -- for -- further encrypted & authenticated communication
 
-1. initiator connects to recipient and sends its `auth` message
-2. recipient accepts, decrypts and verifies `auth` (checks that recovery of signature ==
-   `keccak256(ephemeral-pubk)`)
-3. recipient generates `auth-ack` message from `remote-ephemeral-pubk` and `nonce`
-4. recipient derives secrets and sends the first encrypted frame containing the [Hello] message
-5. initiator receives `auth-ack` and derives secrets
-6. initiator sends its first encrypted frame containing initiator [Hello] message
-7. recipient receives and authenticates first encrypted frame
-8. initiator receives and authenticates first encrypted frame
-9. cryptographic handshake is complete if MAC of first encrypted frame is valid on both sides
+* 'initiator'
+  * := node / opened the TCP connection 
+* 'recipient'
+  * := node / accepted the TCP connection
 
-Either side may disconnect if authentication of the first framed packet fails.
+* 'handshake'
+  * == process of creating those session keys /
+    * carried out BETWEEN 'initiator' -- & -- 'recipient'
+  * steps
+    1. initiator 
+       1. connects -- to -- recipient
+       2. sends its `auth` message
+    2. recipient
+       1. accepts, decrypts & verifies `auth` (recovery of signature == `keccak256(ephemeral-pubk)`)
+       2. generates `auth-ack` message -- from -- `remote-ephemeral-pubk` & `nonce`
+       3. derives secrets & sends the first encrypted frame message (== [Hello](#hello-0x00)) 
+    3. initiator
+       1. receives `auth-ack` & derives secrets
+       2. sends its first encrypted frame message (== [Hello](#hello-0x00))
+    4. recipient
+       1. receives & authenticates first encrypted frame
+    5. initiator
+       1. receives & authenticates first encrypted frame
+    6. if MAC of first encrypted frame is valid | BOTH sides -> cryptographic handshake is complete 
 
-Handshake messages:
+* if authentication of the first framed packet fails -> either side may disconnect 
+
+* handshake messages
 
     auth = auth-size || enc-auth-body
     auth-size = size of enc-auth-body, encoded as a big-endian 16-bit integer
@@ -126,10 +145,11 @@ Handshake messages:
     enc-ack-body = ecies.encrypt(initiator-pubk, ack-body || ack-padding, ack-size)
     ack-padding = arbitrary data
 
-Implementations must ignore any mismatches in `auth-vsn` and `ack-vsn`. Implementations
-must also ignore any additional list elements in `auth-body` and `ack-body`.
+* implementations must ignore any
+  * mismatches | `auth-vsn` & `ack-vsn`
+  * additional list elements | `auth-body` & `ack-body`
 
-Secrets generated following the exchange of handshake messages:
+* secrets / generated -- following the -- exchange of handshake messages
 
     static-shared-secret = ecdh.agree(privkey, remote-pubk)
     ephemeral-key = ecdh.agree(ephemeral-privkey, remote-ephemeral-pubk)
@@ -254,58 +274,82 @@ numerically highest wins, others are ignored.
 
 ## "p2p" Capability
 
-The "p2p" capability is present on all connections. After the initial handshake, both
-sides of the connection must send either [Hello] or a [Disconnect] message. Upon receiving
-the [Hello] message a session is active and any other message may be sent. Implementations
-must ignore any difference in protocol version for forward-compatibility reasons. When
-communicating with a peer of lower version, implementations should try to mimic that
-version.
+* "p2p" capability
+  * 👀is present | ALL connections👀
 
-At any time after protocol negotiation, a [Disconnect] message may be sent.
+* AFTER initial handshake,
+  * initiator & recipient must send 
+    * [Hello](#hello-0x00) message OR
+    * [Disconnect](#disconnect-0x01) message
+
+* | receive the [Hello](#hello-0x00) message,
+  * 💡session is active💡
+  * any other message -- may be -- sent
+
+* implementations MUST ignore differences in protocol version
+  * Reason:🧠forward-compatibility reasons🧠
+  * if communicate / peer of lower version -> implementations should try to mimic that version
+
+* AFTER protocol negotiation
+  * [Disconnect](#disconnect-0x01) message -- may be -- sent
 
 ### Hello (0x00)
 
-`[protocolVersion: P, clientId: B, capabilities, listenPort: P, nodeKey: B_64, ...]`
+* `[protocolVersion: P, clientId: B, capabilities, listenPort: P, nodeKey: B_64, ...]`
+  * `protocolVersion`
+    * == "p2p" capability version
+    * == 5
+  * `clientId`
+    * == client software identity / human-readable string
+      * _Example:_ "Ethereum(++)/1.0.0"
+  * `capabilities`
+    * == list of SUPPORTED capabilities + their versions
+    * == `[[cap1, capVersion1], [cap2, capVersion2], ...]`
+  * `listenPort`
+    * ⚠️legacy⚠️
+      * == NOT use it
+    * == port | client is listening on
+      * == interface / present connection traverses
+    * ❌if 0 -> client is NOT listening❌ 
+  * `nodeId`
+    * == `secp256k1` public key / 
+      * correspond -- to the -- node's private key
+  * recommendations
+    * ❌NOT add ADDITIONAL elements❌
+      * Reason:🧠they may be used | future versions🧠
 
-First packet sent over the connection, and sent once by both sides. No other messages may
-be sent until a Hello is received. Implementations must ignore any additional list elements
-in Hello because they may be used by a future version.
-
-- `protocolVersion` the version of the "p2p" capability, **5**.
-- `clientId` Specifies the client software identity, as a human-readable string (e.g.
-  "Ethereum(++)/1.0.0").
-- `capabilities` is the list of supported capabilities and their versions:
-  `[[cap1, capVersion1], [cap2, capVersion2], ...]`.
-- `listenPort` (legacy) specifies the port that the client is listening on (on the
-  interface that the present connection traverses). If 0 it indicates the client is
-  not listening. This field should be ignored.
-- `nodeId` is the secp256k1 public key corresponding to the node's private key.
+* := FIRST packet 
+  * / sent
+    * -- over the -- connection
+    * 1! -- by -- both sides
+  * == ⚠️UNTIL it's received -> NO OTHER messages may be sent ⚠️
 
 ### Disconnect (0x01)
 
-`[reason: P]`
+* `[reason: P]`
+  * OPTIONAL
+  * integer
 
-Inform the peer that a disconnection is imminent; if received, a peer should disconnect
-immediately. When sending, well-behaved hosts give their peers a fighting chance (read:
-wait 2 seconds) to disconnect to before disconnecting themselves.
+* goal
+  * send -- to the -- peer / disconnection is imminent
+    * if it's received -> a peer should disconnect IMMEDIATELY
+    * well-behaved hosts give their peers a chance (2 seconds) -- to -- disconnect themselves
 
-`reason` is an optional integer specifying one of a number of reasons for disconnect:
-
-| Reason | Meaning                                                      |
-|--------|:-------------------------------------------------------------|
-| `0x00` | Disconnect requested                                         |
-| `0x01` | TCP sub-system error                                         |
-| `0x02` | Breach of protocol, e.g. a malformed message, bad RLP, ...   |
-| `0x03` | Useless peer                                                 |
-| `0x04` | Too many peers                                               |
-| `0x05` | Already connected                                            |
-| `0x06` | Incompatible P2P protocol version                            |
-| `0x07` | Null node identity received - this is automatically invalid  |
-| `0x08` | Client quitting                                              |
-| `0x09` | Unexpected identity in handshake                             |
-| `0x0a` | Identity is the same as this node (i.e. connected to itself) |
-| `0x0b` | Ping timeout                                                 |
-| `0x10` | Some other reason specific to a subprotocol                  |
+| Reason -- to -- disconnect | Meaning                                                      |
+|----------------------------|:-------------------------------------------------------------|
+| `0x00`                     | Disconnect requested                                         |
+| `0x01`                     | TCP sub-system error                                         |
+| `0x02`                     | Breach of protocol, e.g. a malformed message, bad RLP, ...   |
+| `0x03`                     | Useless peer                                                 |
+| `0x04`                     | Too many peers                                               |
+| `0x05`                     | Already connected                                            |
+| `0x06`                     | Incompatible P2P protocol version                            |
+| `0x07`                     | Null node identity received - this is automatically invalid  |
+| `0x08`                     | Client quitting                                              |
+| `0x09`                     | Unexpected identity in handshake                             |
+| `0x0a`                     | Identity is the same as this node (i.e. connected to itself) |
+| `0x0b`                     | Ping timeout                                                 |
+| `0x10`                     | Some other reason specific to a subprotocol                  |
 
 ### Ping (0x02)
 
