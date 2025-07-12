@@ -1,35 +1,59 @@
 # The RLPx Transport Protocol
 
-This specification defines the RLPx transport protocol, a TCP-based transport protocol
-used for communication among Ethereum nodes. The protocol carries encrypted messages
-belonging to one or more 'capabilities' which are negotiated during connection
-establishment. RLPx is named after the [RLP] serialization format. The name is not an
-acronym and has no particular meaning.
-
-The current protocol version is **5**. You can find a list of changes in past versions at
-the end of this document.
+* RLPx transport protocol
+  * := TCP-based transport protocol / 
+    * carries encrypted messages / negotiated | connection establishment
+  * uses
+    * Ethereum node1 can communicate -- with -- Ethereum node1
+  * history
+    * RLP
+      * original name
+        * NOT acronym
+    * RLPx
+      * named after [RLP serialization format](https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp)
+  * CURRENT version
+    * 5
 
 ## Notation
 
-`X || Y`\
-    denotes concatenation of X and Y.\
-`X ^ Y`\
-    is byte-wise XOR of X and Y.\
-`X[:N]`\
-    denotes an N-byte prefix of X.\
-`[X, Y, Z, ...]`\
-    denotes recursive encoding as an RLP list.\
-`keccak256(MESSAGE)`\
-    is the Keccak256 hash function as used by Ethereum.\
-`ecies.encrypt(PUBKEY, MESSAGE, AUTHDATA)`\
-    is the asymmetric authenticated encryption function as used by RLPx.\
-    AUTHDATA is authenticated data which is not part of the resulting ciphertext,\
-    but written to HMAC-256 before generating the message tag.\
-`ecdh.agree(PRIVKEY, PUBKEY)`\
-    is elliptic curve Diffie-Hellman key agreement between PRIVKEY and PUBKEY.
+* `X || Y`
+  * == concatenate X & Y
+  * _Example:_  X = "hello", Y = "world" -> X || Y = "helloworld"
+* `X ^ Y`
+  * byte-wise XOR of X & Y
+  * _Examples:_
+    * 0 ^ 0 = 0
+    * 0 ^ 1 = 1
+    * 1 ^ 0 = 1
+    * 1 ^ 1 = 0
+* `X[:N]`
+  * N-byte prefix -- of -- X
+    * == take FIRST N-byte prefix -- of -- X 
+  * _Example:_ X = [0x12, 0x34, 0x56, 0x78, 0xAB, 0xCD]
+    * X[:2] = [0x12, 0x34]        
+    * X[:4] = [0x12, 0x34, 0x56, 0x78]  
+* `[X, Y, Z, ...]`
+  * recursive encoding -- as an -- RLP list
+  * _Example:_ auth-body = [signature_bytes, pubkey_bytes, nonce_bytes, 4]
+    * signature_bytes → RLP encoding → encoded_sig
+    * pubkey_bytes → RLP encoding → encoded_pubkey
+    * nonce_bytes → RLP encoding → encoded_nonce
+    * 4 → RLP encoding → encoded_version
+* `keccak256(MESSAGE)`
+  * Keccak256 hash function -- as used by -- Ethereum
+* `ecies.encrypt(PUBKEY, MESSAGE, AUTHDATA)`
+  * asymmetric authenticated encryption function -- as used by -- RLPx
+    * ECIES == Elliptic Curve Integrated Encryption Scheme
+  * AUTHDATA 
+    * == authenticated data / 
+      * ❌NOT included | ciphertext❌
+      * BEFORE generating the message tag, written -- to -- HMAC-256 
+* `ecdh.agree(PRIVKEY, PUBKEY)`
+  * elliptic curve Diffie-Hellman
 
 ## ECIES Encryption
 
+* TODO: 
 ECIES (Elliptic Curve Integrated Encryption Scheme) is an asymmetric encryption method
 used in the RLPx handshake. The cryptosystem used by RLPx is
 
@@ -347,5 +371,5 @@ Creative Commons Attribution-NonCommercial-ShareAlike
 [Capability Messaging]: #capability-messaging
 [EIP-8]: https://eips.ethereum.org/EIPS/eip-8
 [EIP-706]: https://eips.ethereum.org/EIPS/eip-706
-[RLP]: https://ethereum.org/en/developers/docs/data-structures-and-encoding/rlp
+[RLP]: 
 [snappy format]: https://github.com/google/snappy/blob/master/format_description.txt
