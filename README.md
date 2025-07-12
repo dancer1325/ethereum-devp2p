@@ -22,35 +22,34 @@
 
 ### The Mission
 
-* TODO: devp2p is a set of network protocols which form the Ethereum peer-to-peer network.
-'Ethereum network' is meant in a broad sense, i.e. devp2p isn't specific to a particular
-blockchain, but should serve the needs of any networked application associated with the
-Ethereum umbrella.
-
-We aim for an integrated system of orthogonal parts, implemented in multiple programming
-environments. The system provides discovery of other participants throughout the Internet
-as well as secure communication with those participants.
-
-The network protocols in devp2p should be easy to implement from scratch given only the
-specification, and must work within the limits of a consumer-grade Internet connection. We
-usually design protocols in a 'specification first' approach, but any specification
-proposed must be accompanied by a working prototype or implementable within reasonable
-time.
+* devp2p
+  * == set of network protocols / 
+    * form the Ethereum P2P network
+    * ❌NOT specific -- to a -- particular blockchain❌
+    * easy to implement from scratch -- based on the -- specification
+    * MUST work | consumer-grade Internet connection
+    * follow 'specification first' approach + working prototype 
+  * == orthogonal parts / 
+    * implemented | MULTIPLE programming environments
+  * provides  
+    * discovery of -- , throughout Internet, -- other participants
+    * secure communication -- with -- those participants
+  * 's goal
+    * serve Ethereum's needs
+  * is adopting parts of libp2p
 
 ### Relationship with libp2p
 
-The [libp2p] project was started at about the same time as devp2p and seeks to be a
-collection of modules for assembling a peer-to-peer network from modular components.
-Questions about the relationship between devp2p and libp2p come up rather often.
-
-It's hard to compare the two projects because they have different scope and are designed
-with different goals in mind. devp2p is an integrated system definition that wants to
-serve Ethereum's needs well (although it may be a good fit for other applications, too)
-while libp2p is a collection of programming library parts serving no single application in
-particular.
-
-That said, both projects are very similar in spirit and devp2p is slowly adopting parts of
-libp2p as they mature.
+* [libp2p project](https://libp2p.io)
+  * started | SAME time -- as -- devp2p
+  * == collection of modules / 
+    * FROM modular components -- assemble a -- P2P network
+  * vs devp2p
+    * DIFFERENT 
+      * scope
+      * design
+  * 's goal
+    * NO serve 1! specific application
 
 ### Implementations
 
@@ -77,5 +76,3 @@ libp2p as they mature.
 ### Issues
 
 * report [protocol level security issues](https://bounty.ethereum.org)
-
-[libp2p]: https://libp2p.io
