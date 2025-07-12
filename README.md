@@ -1,31 +1,28 @@
 <p align="center"><img src="etherdog.png"></p>
 
-This repository contains specifications for the peer-to-peer networking protocols used by
-Ethereum. The issue tracker here is for discussions of protocol changes. It's also OK to
-open an issue if you just have a question.
-
-Protocol level security issues are valuable! Please report serious issues responsibly
-through the [Ethereum Foundation Bounty Program].
-
-We have several specifications for low-level protocols:
-
-- [Ethereum Node Records]
-- [DNS Node Lists]
-- [Node Discovery Protocol v4]
-- [Node Discovery Protocol v5]
-- [RLPx protocol]
-
-The repository also contains specifications of many RLPx-based application-level protocols:
-
-- [Ethereum Wire Protocol] (eth/68)
-- [Ethereum Snapshot Protocol] (snap/1)
-- [Light Ethereum Subprotocol] (les/4)
-- [Parity Light Protocol] (pip/1)
-- [Ethereum Witness Protocol] (wit/0)
+* goal
+  * Ethereum P2P networking protocols specifications
+    * low-level protocols
+      - [Ethereum Node Records](./enr.md)
+      - [DNS Node Lists](./dnsdisc.md)
+      - [Node Discovery Protocol v4](./discv4.md)
+      - [Node Discovery Protocol v5](./discv5/discv5.md)
+      - [RLPx protocol](./rlpx.md)
+    * RLPx-based application-level protocols
+      - [Ethereum Wire Protocol](./caps/eth.md)
+        - eth/68
+      - [Ethereum Snapshot Protocol](./caps/snap.md)
+        - snap/1
+      - [Light Ethereum Subprotocol](./caps/les.md)
+        - les/4
+      - [Parity Light Protocol](./caps/pip.md)
+        - pip/1
+      - [Ethereum Witness Protocol](./caps/wit.md)
+        - wit/0
 
 ### The Mission
 
-devp2p is a set of network protocols which form the Ethereum peer-to-peer network.
+* TODO: devp2p is a set of network protocols which form the Ethereum peer-to-peer network.
 'Ethereum network' is meant in a broad sense, i.e. devp2p isn't specific to a particular
 blockchain, but should serve the needs of any networked application associated with the
 Ethereum umbrella.
@@ -57,36 +54,28 @@ libp2p as they mature.
 
 ### Implementations
 
-devp2p is part of most Ethereum clients. Implementations include:
+* MOST Ethereum clients implement it
+  - C#: Nethermind <https://github.com/NethermindEth/nethermind>
+  - C++: Aleth <https://github.com/ethereum/aleth>
+  - C: Breadwallet <https://github.com/breadwallet/breadwallet-core>
+  - Elixir: Exthereum <https://github.com/exthereum/ex_wire>
+  - Go: go-ethereum/geth <https://github.com/ethereum/go-ethereum>
+  - Java: Tuweni RLPx library <https://github.com/apache/incubator-tuweni/tree/master/rlpx>
+  - Java: Besu <https://github.com/hyperledger/besu>
+  - JavaScript: EthereumJS <https://github.com/ethereumjs/ethereumjs-devp2p>
+  - Kotlin: Tuweni Discovery library <https://github.com/apache/incubator-tuweni/tree/master/devp2p>
+  - Nim: Nimbus nim-eth <https://github.com/status-im/nim-eth>
+  - Python: Trinity <https://github.com/ethereum/trinity>
+  - Ruby: Ciri <https://github.com/ciri-ethereum/ciri>
+  - Ruby: ruby-devp2p <https://github.com/cryptape/ruby-devp2p>
+  - Rust: rust-devp2p <https://github.com/rust-ethereum/devp2p>
+  - Rust: openethereum <https://github.com/openethereum/openethereum>
+  - Rust: reth <https://github.com/paradigmxyz/reth>
 
-- C#: Nethermind <https://github.com/NethermindEth/nethermind>
-- C++: Aleth <https://github.com/ethereum/aleth>
-- C: Breadwallet <https://github.com/breadwallet/breadwallet-core>
-- Elixir: Exthereum <https://github.com/exthereum/ex_wire>
-- Go: go-ethereum/geth <https://github.com/ethereum/go-ethereum>
-- Java: Tuweni RLPx library <https://github.com/apache/incubator-tuweni/tree/master/rlpx>
-- Java: Besu <https://github.com/hyperledger/besu>
-- JavaScript: EthereumJS <https://github.com/ethereumjs/ethereumjs-devp2p>
-- Kotlin: Tuweni Discovery library <https://github.com/apache/incubator-tuweni/tree/master/devp2p>
-- Nim: Nimbus nim-eth <https://github.com/status-im/nim-eth>
-- Python: Trinity <https://github.com/ethereum/trinity>
-- Ruby: Ciri <https://github.com/ciri-ethereum/ciri>
-- Ruby: ruby-devp2p <https://github.com/cryptape/ruby-devp2p>
-- Rust: rust-devp2p <https://github.com/rust-ethereum/devp2p>
-- Rust: openethereum <https://github.com/openethereum/openethereum>
-- Rust: reth <https://github.com/paradigmxyz/reth>
+* [WireShark dissectors](https://github.com/ConsenSys/ethereum-dissectors)
 
-WireShark dissectors are available here: <https://github.com/ConsenSys/ethereum-dissectors>
+### Issues
 
-[Ethereum Foundation Bounty Program]: https://bounty.ethereum.org
-[Ethereum Wire Protocol]: ./caps/eth.md
-[Ethereum Snapshot Protocol]: ./caps/snap.md
-[Light Ethereum Subprotocol]: ./caps/les.md
-[Ethereum Witness Protocol]: ./caps/wit.md
-[Ethereum Node Records]: ./enr.md
-[DNS Node Lists]: ./dnsdisc.md
-[Node Discovery Protocol v4]: ./discv4.md
-[Node Discovery Protocol v5]: ./discv5/discv5.md
-[Parity Light Protocol]: ./caps/pip.md
-[RLPx protocol]: ./rlpx.md
+* report [protocol level security issues](https://bounty.ethereum.org)
+
 [libp2p]: https://libp2p.io
