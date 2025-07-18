@@ -4,7 +4,7 @@
   * := TCP-based transport protocol / 
     * carries encrypted messages / negotiated | connection establishment
   * uses
-    * Ethereum node1 can communicate -- with -- Ethereum node1
+    * Ethereum node1 can communicate -- with -- Ethereum node2
   * history
     * RLP
       * original name
@@ -108,8 +108,11 @@ the authenticity of the message by checking whether
   * := node / accepted the TCP connection
 
 * 'handshake'
-  * == process of creating those session keys /
+  * == process of creating those session keys (TODO: ❓) /
     * carried out BETWEEN 'initiator' -- & -- 'recipient'
+  * == key-exchange process /
+    * enables
+      * nodes can communicate privately & securely
   * steps
     1. initiator 
        1. connects -- to -- recipient
@@ -159,117 +162,133 @@ the authenticity of the message by checking whether
 
 ## Framing
 
-All messages following the initial handshake are framed. A frame carries a single
-encrypted message belonging to a capability.
+* 👀ALL messages / follow the initial handshake -> are framed👀
 
-The purpose of framing is multiplexing multiple capabilities over a single connection.
-Secondarily, as framed messages yield reasonable demarcation points for message
-authentication codes, supporting an encrypted and authenticated stream becomes
-straight-forward. Frames are encrypted and authenticated via key material generated during
-the handshake.
+* frame
+  * == 1! encrypted message / belong to a capability
+    * encrypted & authenticated -- via -- key material / generated | handshake 
+  * 's goal
+    * multiplex MULTIPLE capabilities -- over a -- 1! connection
+  * allows
+    * distinct better the messages
+    * making easier the verification of EACH message
+  * 's header
+    * == information about: message's size & message's source capability
 
-The frame header provides information about the size of the message and the message's
-source capability. Padding is used to prevent buffer starvation, such that frame
-components are byte-aligned to block size of cipher.
+* Padding
+  * prevent buffer starvation
+    * Reason:🧠frame components are byte-aligned -- to -- block cipher's size🧠
 
-    frame = header-ciphertext || header-mac || frame-ciphertext || frame-mac
-    header-ciphertext = aes(aes-secret, header)
-    header = frame-size || header-data || header-padding
-    header-data = [capability-id, context-id]
-    capability-id = integer, always zero
-    context-id = integer, always zero
-    header-padding = zero-fill header to 16-byte boundary
-    frame-ciphertext = aes(aes-secret, frame-data || frame-padding)
-    frame-padding = zero-fill frame-data to 16-byte boundary
-
-See the [Capability Messaging] section for definitions of `frame-data` and `frame-size.`
+        frame = header-ciphertext || header-mac || frame-ciphertext || frame-mac
+        header-ciphertext = aes(aes-secret, header)
+        header = frame-size || header-data || header-padding
+        header-data = [capability-id, context-id]
+        capability-id = integer, always zero
+        context-id = integer, always zero
+        header-padding = zero-fill header to 16-byte boundary
+        frame-ciphertext = aes(aes-secret, frame-data || frame-padding)
+        frame-padding = zero-fill frame-data to 16-byte boundary
 
 ### MAC
 
-Message authentication in RLPx uses two keccak256 states, one for each direction of
-communication. The `egress-mac` and `ingress-mac` keccak states are continuously updated
-with the ciphertext of bytes sent (egress) or received (ingress). Following the initial
-handshake, the MAC states are initialized as follows:
+* == message authentication | RLPx
+* 💡-- based on -- 2 keccak256 states (`egress-mac` & `ingress-mac`)💡
+  * 👀1 keccak256 state / EACH direction of communication👀
+  * CONTINUOUSLY updated -- with the -- ciphertext of bytes
+    * sent (egress) OR
+    * received (ingress)
 
-Initiator:
+* ways to initialize MAC states
+  * Initiator
 
     egress-mac = keccak256.init((mac-secret ^ recipient-nonce) || auth)
     ingress-mac = keccak256.init((mac-secret ^ initiator-nonce) || ack)
-
-Recipient:
+  
+  * Recipient
 
     egress-mac = keccak256.init((mac-secret ^ initiator-nonce) || ack)
     ingress-mac = keccak256.init((mac-secret ^ recipient-nonce) || auth)
 
-When a frame is sent, the corresponding MAC values are computed by updating the
-`egress-mac` state with the data to be sent. The update is performed by XORing the header
-with the encrypted output of its corresponding MAC. This is done to ensure uniform
-operations are performed for both plaintext MAC and ciphertext. All MACs are sent
-cleartext.
+* | send the frame,
+  * MAC values are -- , by updating the `egress-mac` state + data to be sent, -- computed 
+    * update == XORing (header & MAC's encrypted output)
+    * -> uniform operations are performed -- for -- plaintext MAC & ciphertext
+
+* ALL MACs are sent cleartext
 
     header-mac-seed = aes(mac-secret, keccak256.digest(egress-mac)[:16]) ^ header-ciphertext
     egress-mac = keccak256.update(egress-mac, header-mac-seed)
     header-mac = keccak256.digest(egress-mac)[:16]
 
-Computing `frame-mac`:
+* computing `frame-mac`
 
     egress-mac = keccak256.update(egress-mac, frame-ciphertext)
     frame-mac-seed = aes(mac-secret, keccak256.digest(egress-mac)[:16]) ^ keccak256.digest(egress-mac)[:16]
     egress-mac = keccak256.update(egress-mac, frame-mac-seed)
     frame-mac = keccak256.digest(egress-mac)[:16]
 
-Verifying the MAC on ingress frames is done by updating the `ingress-mac` state in the
-same way as `egress-mac` and comparing to the values of `header-mac` and `frame-mac` in
-the ingress frame. This should be done before decrypting `header-ciphertext` and
-`frame-ciphertext`.
+* verify the MAC | ingress frames
+  * | BEFORE decrypting `header-ciphertext` & `frame-ciphertext`, 
+    * steps
+      * update the `ingress-mac` state
+        * == update the `egress-mac`
+      * compare with `header-mac` & `frame-mac`
 
 # Capability Messaging
 
-All messages following the initial handshake are associated with a 'capability'. Any
-number of capabilities can be used concurrently on a single RLPx connection.
+* ALL messages / follow the initial handshake -> associated -- with a -- 'capability'
 
-A capability is identified by a short ASCII name (max eight characters) and version number. The capabilities
-supported on either side of the connection are exchanged in the [Hello] message belonging
-to the 'p2p' capability which is required to be available on all connections.
+* MULTIPLE capabilities can be used CONCURRENTLY | 1! RLPx connection
+
+* capability
+  * 's identifier
+    * == short ASCII name (<= 8 characters) + version number
+  * are exchanged | [Hello message](#hello-0x00) / -- belong to the -- 'p2p' capability / 
+    * required to be available | ALL connections
 
 ## Message Encoding
 
-The initial [Hello] message is encoded as follows:
+* [Hello message](#hello-0x00) encoding
 
     frame-data = msg-id || msg-data
+    // `msg-id` == RLP-encoded integer / identify the message
+    // `msg-data` == RLP list / contain the message data 
     frame-size = length of frame-data, encoded as a 24bit big-endian integer
 
-where `msg-id` is an RLP-encoded integer identifying the message and `msg-data` is an RLP
-list containing the message data.
-
-All messages following Hello are compressed using the Snappy algorithm.
+* NEXT messages compressing
 
     frame-data = msg-id || snappyCompress(msg-data)
     frame-size = length of frame-data encoded as a 24bit big-endian integer
-
-Note that the `frame-size` of compressed messages refers to the compressed size of
-`msg-data`. Since compressed messages may inflate to a very large size after
-decompression, implementations should check for the uncompressed size of the data before
-decoding the message. This is possible because the [snappy format] contains a length
-header. Messages carrying uncompressed data larger than 16 MiB should be rejected by
-closing the connection.
+    // compressed messages' `frame-size` == `msg-data`'s compressed size
+  * | AFTER implementations & BEFORE decoding the message, 
+    * check for the data's uncompressed size  
+      * Reason:🧠AFTER decompression, compress messages may inflate very large size🧠
+      * if messages carrying uncompressed data > 16 MiB -> rejected -- by -- closing the connection 
+  * [snappy format](https://github.com/google/snappy/blob/master/format_description.txt)
+    * contains a length header
 
 ## Message ID-based Multiplexing
 
-While the framing layer supports a `capability-id`, the current version of RLPx doesn't
-use that field for multiplexing between different capabilities. Instead, multiplexing
+* TODO: While the framing layer supports a `capability-id`, the current version of RLPx doesn't
+use that field for multiplexing between different capabilities
+* Instead, multiplexing
 relies purely on the message ID.
 
-Each capability is given as much of the message-ID space as it needs. All such
-capabilities must statically specify how many message IDs they require. On connection and
+Each capability is given as much of the message-ID space as it needs
+* All such
+capabilities must statically specify how many message IDs they require
+* On connection and
 reception of the [Hello] message, both peers have equivalent information about what
 capabilities they share (including versions) and are able to form consensus over the
 composition of message ID space.
 
 Message IDs are assumed to be compact from ID 0x10 onwards (0x00-0x0f is reserved for the
 "p2p" capability) and given to each shared (equal-version, equal-name) capability in
-alphabetic order. Capability names are case-sensitive. Capabilities which are not shared
-are ignored. If multiple versions are shared of the same (equal name) capability, the
+alphabetic order
+* Capability names are case-sensitive
+* Capabilities which are not shared
+are ignored
+* If multiple versions are shared of the same (equal name) capability, the
 numerically highest wins, others are ignored.
 
 ## "p2p" Capability
@@ -353,33 +372,36 @@ numerically highest wins, others are ignored.
 
 ### Ping (0x02)
 
-`[]`
-
-Requests an immediate reply of [Pong] from the peer.
+* `[]`
+* requests an IMMEDIATE reply of Pong -- from the -- peer
 
 ### Pong (0x03)
 
-`[]`
-
-Reply to the peer's [Ping] packet.
+* `[]`
+* reply -- to the -- peer's Ping packet
 
 # Change Log
 
 ### Known Issues in the current version
 
-- The frame encryption/MAC scheme is considered 'broken' because `aes-secret` and
-  `mac-secret` are reused for both reading and writing. The two sides of a RLPx connection
-  generate two CTR streams from the same key, nonce and IV. If an attacker knows one
-  plaintext, they can decrypt unknown plaintexts of the reused keystream.
+- frame encryption/MAC scheme is 'broken'
+  - Reason:🧠`aes-secret` & `mac-secret` are reused -- for -- reading & writing🧠 ->
+    - RLPx connection's sides generate 2 CTR streams -- from the -- SAME key & nonce & IV
+    - if an attacker knows 1 plaintext -> they can decrypt reused keystream's unknown plaintexts 
 - General feedback from reviewers has been that the use of a keccak256 state as a MAC
   accumulator and the use of AES in the MAC algorithm is an uncommon and overly complex
   way to perform message authentication but can be considered safe.
-- The frame encoding provides `capability-id` and `context-id` fields for multiplexing
-  purposes, but these fields are unused.
+
+- frame encoding
+  - provides
+    - `capability-id` & `context-id` fields 
+      - -- for -- multiplexing purposes
+        - BUT unused
 
 ### Version 5 (EIP-706, September 2017)
 
-[EIP-706] added Snappy message compression.
+* [EIP-706](https://eips.ethereum.org/EIPS/eip-706)
+  * add Snappy message compression
 
 ### Version 4 (EIP-8, December 2015)
 
@@ -414,6 +436,3 @@ Creative Commons Attribution-NonCommercial-ShareAlike
 [Pong]: #pong-0x03
 [Capability Messaging]: #capability-messaging
 [EIP-8]: https://eips.ethereum.org/EIPS/eip-8
-[EIP-706]: https://eips.ethereum.org/EIPS/eip-706
-[RLP]: 
-[snappy format]: https://github.com/google/snappy/blob/master/format_description.txt
